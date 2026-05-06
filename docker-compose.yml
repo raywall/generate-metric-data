@@ -1,0 +1,50 @@
+services:
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: datadog-agent
+    environment:
+      # -----------------------------------------------------------------
+      # Credenciais — preencha no .env ou exporte as variáveis no shell.
+      # -----------------------------------------------------------------
+      - DD_API_KEY=${DD_API_KEY}
+      - DD_SITE=${DD_SITE:-datadoghq.com}
+
+      # -----------------------------------------------------------------
+      # Proxy HTTP corporativo.
+      # Defina DD_PROXY_URL no .env (ex: http://proxy.corp.internal:8080).
+      # -----------------------------------------------------------------
+      - DD_PROXY_HTTPS=${DD_PROXY_URL:-}
+      - DD_PROXY_HTTP=${DD_PROXY_URL:-}
+      - DD_PROXY_NO_PROXY=localhost,127.0.0.1,datadog-agent
+
+      # -----------------------------------------------------------------
+      # DogStatsD — permite receber métricas de outros containers/hosts.
+      # -----------------------------------------------------------------
+      - DD_DOGSTATSD_PORT=8125
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+
+      # -----------------------------------------------------------------
+      # Coleta de infra desabilitada — geração de métricas customizadas.
+      # Remova/ajuste as linhas abaixo caso queira coleta de host/logs.
+      # -----------------------------------------------------------------
+      - DD_PROCESS_AGENT_ENABLED=false
+      - DD_LOGS_ENABLED=false
+      - DD_APM_ENABLED=false
+
+    ports:
+      - "8125:8125/udp"   # DogStatsD (UDP)
+      - "8126:8126/tcp"   # APM trace receiver (reservado, desabilitado acima)
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+    healthcheck:
+      test: ["CMD", "agent", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    restart: unless-stopped

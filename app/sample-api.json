@@ -1,7 +1,8 @@
 {
-    "mode": "agent",
-    "datadog_proxy_url": "localhost",
-    "datadog_port": 8125,
+    "mode": "api",
+    "datadog_api_key": "YOUR_DD_API_KEY_HERE",
+    "datadog_site": "datadoghq.com",
+    "http_proxy": "http://proxy.corp.internal:8080",
     "metrics": [
         {
             "service": "service_name",
@@ -20,7 +21,7 @@
         {
             "service": "service_name",
             "name": "metric.latency.test",
-            "type": "histogram",
+            "type": "gauge",
             "value": 100,
             "min_value": 50,
             "max_value": 800,

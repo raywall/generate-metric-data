@@ -4,13 +4,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+)
+
+const (
+	ModeAgent = "agent"
+	ModeAPI   = "api"
 )
 
 // Config representa o arquivo JSON de configuração.
 type Config struct {
-	DatadogProxyURL string   `json:"datadog_proxy_url"`
-	DatadogPort     int      `json:"datadog_port"`
-	Metrics         []Metric `json:"metrics"`
+	// Mode define como as métricas serão enviadas: "agent" (DogStatsD) ou "api" (HTTP).
+	Mode string `json:"mode"`
+
+	// --- Modo agent (DogStatsD) ---
+	// DatadogProxyURL é o endereço do agent ou proxy DogStatsD (ex: "localhost").
+	DatadogProxyURL string `json:"datadog_proxy_url,omitempty"`
+	// DatadogPort é a porta UDP do DogStatsD (padrão: 8125).
+	DatadogPort int `json:"datadog_port,omitempty"`
+
+	// --- Modo api (HTTP) ---
+	// DatadogAPIKey é a chave de API do Datadog para autenticação.
+	DatadogAPIKey string `json:"datadog_api_key,omitempty"`
+	// DatadogSite é o site do Datadog (ex: "datadoghq.com", "datadoghq.eu", "us3.datadoghq.com").
+	DatadogSite string `json:"datadog_site,omitempty"`
+	// HTTPProxy é o endereço do proxy HTTP corporativo (ex: "http://proxy.corp.internal:8080").
+	// Quando informado, todas as chamadas à API do Datadog passarão por este proxy.
+	HTTPProxy string `json:"http_proxy,omitempty"`
+
+	Metrics []Metric `json:"metrics"`
 }
 
 // Metric representa uma especificação de métrica a ser gerada.
@@ -45,12 +67,33 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("parse do JSON: %w", err)
 	}
 
-	if cfg.DatadogProxyURL == "" {
-		return nil, fmt.Errorf("campo datadog_proxy_url é obrigatório")
+	// Normaliza e valida o mode.
+	cfg.Mode = strings.ToLower(strings.TrimSpace(cfg.Mode))
+	if cfg.Mode == "" {
+		cfg.Mode = ModeAgent // retrocompatibilidade
 	}
-	if cfg.DatadogPort == 0 {
-		return nil, fmt.Errorf("campo datadog_port é obrigatório")
+	if cfg.Mode != ModeAgent && cfg.Mode != ModeAPI {
+		return nil, fmt.Errorf("mode deve ser %q ou %q, recebido: %q", ModeAgent, ModeAPI, cfg.Mode)
 	}
+
+	// Valida campos específicos do modo.
+	switch cfg.Mode {
+	case ModeAgent:
+		if cfg.DatadogProxyURL == "" {
+			return nil, fmt.Errorf("modo agent: campo datadog_proxy_url é obrigatório")
+		}
+		if cfg.DatadogPort == 0 {
+			return nil, fmt.Errorf("modo agent: campo datadog_port é obrigatório")
+		}
+	case ModeAPI:
+		if cfg.DatadogAPIKey == "" {
+			return nil, fmt.Errorf("modo api: campo datadog_api_key é obrigatório")
+		}
+		if cfg.DatadogSite == "" {
+			cfg.DatadogSite = "datadoghq.com"
+		}
+	}
+
 	if len(cfg.Metrics) == 0 {
 		return nil, fmt.Errorf("é necessário ao menos uma métrica em metrics")
 	}
