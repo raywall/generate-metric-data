@@ -1,0 +1,60 @@
+{
+    "datadog_proxy_url": "localhost",
+    "datadog_port": 8135,
+    "metrics": [
+        {
+            "service": "service_name",
+            "name": "metric.name.test",
+            "type": "count",
+            "value": 1,
+            "tags": [
+                "env:prod",
+                "sigla:xx2",
+                "segmento:ep",
+                "context:iniciador",
+                "result:success"
+            ],
+            "quantity": 1000
+        },
+        {
+            "service": "service_name",
+            "name": "metric.latency.test",
+            "type": "histogram",
+            "value": 100,
+            "min_value": 50,
+            "max_value": 800,
+            "tags": [
+                "env:prod",
+                "sigla:xx2",
+                "endpoint:/api/v1/payments"
+            ],
+            "quantity": 500,
+            "delay_ms_max": 20
+        },
+        {
+            "service": "service_name",
+            "name": "metric.queue.depth",
+            "type": "gauge",
+            "value": 0,
+            "min_value": 0,
+            "max_value": 1000,
+            "tags": [
+                "env:prod",
+                "queue:orders"
+            ],
+            "quantity": 200
+        },
+        {
+            "service": "service_name",
+            "name": "metric.errors.test",
+            "type": "count",
+            "value": 1,
+            "tags": [
+                "env:prod",
+                "result:error",
+                "error_code:500"
+            ],
+            "quantity": 50
+        }
+    ]
+}
